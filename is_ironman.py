@@ -1,5 +1,7 @@
 from asyncio import sleep
+from datetime import datetime
 from configparser import ConfigParser
+
 import requests
 from bs4 import BeautifulSoup
 from discord.ext import commands, tasks
@@ -21,11 +23,14 @@ conf = config('group_ironman')
 
 
 def get_daily_msg():
+    now = datetime.now()
+    str_time = now.strftime("%d-%m-%Y, %H:%M:%S")
     daily_update = "ironman status: \n"
     if is_group_ironman():
         daily_update += "is out!!"
     else:
-        daily_update += "is not out yet. Checking again in 12 hours!"
+        daily_update += "is not out yet. Checking again in 1 hour! \n"
+    daily_update += f"last updated {str_time}"
     return daily_update
         
 
@@ -42,11 +47,13 @@ class DailyChecker(commands.Cog):
         self.check_daily_ironman.start()
         self.channel = channel
 
-    @tasks.loop(hours=12)
+    @tasks.loop(hours=1)
     async def check_daily_ironman(self):
         channel = self.bot.get_channel(int(self.channel))
+        message = await channel.fetch_message(conf['msg'])
         msg = get_daily_msg()
-        await channel.send(msg)
+        await message.edit(content=msg)
+
 
 
 
